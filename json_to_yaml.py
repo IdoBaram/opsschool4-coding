@@ -1,37 +1,41 @@
 import json
-from collections import defaultdict
-import yaml
+import sys
 
-ppl_ages_group = defaultdict(list)
+LAST_INDEX = -1
+NEXT_AGE_BORDER = 1
 AGE = 1
-LAST_ITEM = -1
 NAME = 0
+HW_JSON = 'hw.json'
 
-with open("hw.json", "r", encoding='utf-8') as read_file:
-    data = json.load(read_file)
 
-border_min = 0
-buckets = sorted(data["buckets"])
-ppl_ages = sorted(data["ppl_ages"].items(), key=lambda kv: kv[AGE])
-if ppl_ages[LAST_ITEM][AGE] >= buckets[LAST_ITEM]:
-    border_max = ppl_ages[LAST_ITEM][AGE] + 1
-else:
-    border_max = buckets[LAST_ITEM]
+def yaml_my_json_group_sorted():
+    try:
+        with open(HW_JSON, "r", encoding='utf-8') as import_file:
+            data = json.load(import_file)
+    except FileNotFoundError:
+        print(f"{HW_JSON} file does'nt exists")
+        exit(404)
+    except:
+        print("Unexpected error:", sys.exc_info()[0])
+        exit(100)
 
-for person in ppl_ages:
-    if person[AGE] > buckets[LAST_ITEM]:
-        border_min = buckets[LAST_ITEM]
-        border_in_max = border_max
-    else:
-        for border in buckets:
-            border_in_max = border
-            if border_min <= person[AGE] < border_in_max:
-                break
+    ages = data['buckets']
+    people_list = sorted(data["ppl_ages"].items(), key=lambda kv: kv[AGE])
+    extra_age = [0, people_list[LAST_INDEX][AGE] + 1]
+    ages.extend(extra_age)
+    sorted_ages = sorted(ages)
+
+    current_people_list = people_list
+    for min_age_border in range(len(sorted_ages) - 1):
+        print(sorted_ages[min_age_border], "-", sorted_ages[min_age_border + NEXT_AGE_BORDER], ":", sep="")
+        for person in current_people_list:
+            if sorted_ages[min_age_border] <= person[AGE] < sorted_ages[min_age_border + NEXT_AGE_BORDER]:
+                print("  -", person[NAME])
             else:
-                border_min = border_in_max
-                continue
+                current_people_list = people_list[people_list.index(person):]
+                break
 
-    ppl_ages_group[f"{border_min}-{border_in_max}"].append(person[NAME])
-print(yaml.dump(dict(ppl_ages_group), allow_unicode=True))
 
+if __name__ == '__main__':
+    yaml_my_json_group_sorted()
 
