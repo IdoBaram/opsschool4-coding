@@ -1,45 +1,40 @@
 import json
-import yaml
-import urllib.request
+import sys
+
+LAST_INDEX = -1
+NEXT_AGE_BORDER = 1
+AGE = 1
+NAME = 0
+HW_JSON = 'hw.json'
 
 
-json_source = urllib.request.urlopen("https://raw.githubusercontent.com/IdoBaram/opsschool4-coding/master/hw.json")
-json_raw = json_source.read()
-j = json.loads(json_raw .decode("utf-8"))
+def yaml_my_json_group_sorted():
+    try:
+        with open(HW_JSON, "r", encoding='utf-8') as import_file:
+            data = json.load(import_file)
+    except FileNotFoundError:
+        print(f"{HW_JSON} file does'nt exists")
+        exit(404)
+    except:
+        print("Unexpected error:", sys.exc_info()[0])
+        exit(100)
 
-sorted_buckets = j["buckets"]
-sorted_buckets.sort()
-print(sorted_buckets)
+    ages_borders = data['buckets']
+    people_list = sorted(data["ppl_ages"].items(), key=lambda kv: kv[AGE])
+    extra_age = [0, people_list[LAST_INDEX][AGE] + 1]
+    ages_borders.extend(extra_age)
+    sorted_ages_broders = sorted(ages_borders)
 
-ppl = j["ppl_ages"]
-
-max_age = 0
-for k, v in ppl.items():
-    if v > max_age:
-        max_age = v
-        max_age += 1
-
-bucket_groups = {}
-
-for i, v in enumerate(sorted_buckets):
-    if i == 0:
-        bucket_groups[str(0) + "-" + str(sorted_buckets[i])] = [0, sorted_buckets[i]]
-    elif i == len(sorted_buckets) - 1:
-        bucket_groups[str(sorted_buckets[i]) + "-" + str(max_age)] = [sorted_buckets[i], max_age]
-    else:
-        bucket_groups[str(sorted_buckets[i - 1]) + "-" + str(sorted_buckets[i])] = [sorted_buckets[i - 1],
-                                                                                    sorted_buckets[i]]
+    current_people_list = people_list
+    for age_border in range(len(sorted_ages_broders) - 1):
+        print(sorted_ages_broders[age_border], "-", sorted_ages_broders[age_border + NEXT_AGE_BORDER], ":", sep="")
+        for person in current_people_list:
+            if sorted_ages_broders[age_border] <= person[AGE] < sorted_ages_broders[age_border + NEXT_AGE_BORDER]:
+                print("  -", person[NAME])
+            else:
+                current_people_list = people_list[people_list.index(person):]
+                break
 
 
-final_result = {}
-for k, v in bucket_groups.items():
-    final_result[k] = []
-
-for n, p in ppl.items():
-    for k, v in bucket_groups.items():
-        if p >= v[0] and p < v[1]:
-            final_result[k].append(n)
-
-yaml_parse = yaml.dump(final_result)
-
-print(yaml_parse)
+if __name__ == '__main__':
+    yaml_my_json_group_sorted()
