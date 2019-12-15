@@ -38,4 +38,3 @@ def yaml_my_json_group_sorted():
 
 if __name__ == '__main__':
     yaml_my_json_group_sorted()
-
